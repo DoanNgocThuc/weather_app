@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:weather_app/widgets/forecast_card.dart';
 
 import '../widgets/search_box.dart';
 import '../widgets/current_weather_card.dart';
@@ -50,9 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.medium,
       );
-      await context
-          .read<WeatherProvider>()
-          .fetchWeatherAndForecastByCoords(pos.latitude, pos.longitude);
+      await context.read<WeatherProvider>().fetchWeatherAndForecastByCoords(
+        pos.latitude,
+        pos.longitude,
+      );
     } catch (e) {
       final prov = context.read<WeatherProvider>();
       prov
@@ -66,20 +68,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final bgLight = const Color(0xFFDCE9F4);
     final weatherProvider = context.watch<WeatherProvider>();
 
-    final hasData = weatherProvider.currentWeather != null &&
+    final hasData =
+        weatherProvider.currentWeather != null &&
         weatherProvider.visibleForecast.isNotEmpty;
 
-    final currentCard = hasData
-        ? CurrentWeatherCard(
-            city: weatherProvider.currentWeather!.city,
-            date: weatherProvider.currentWeather!.date,
-            temp: weatherProvider.currentWeather!.temp,
-            wind: weatherProvider.currentWeather!.wind,
-            humidity: weatherProvider.currentWeather!.humidity,
-            condition: weatherProvider.currentWeather!.condition,
-            icon: weatherProvider.currentWeather!.icon,
-          )
-        : null;
+    final currentCard =
+        hasData
+            ? CurrentWeatherCard(
+              city: weatherProvider.currentWeather!.city,
+              date: weatherProvider.currentWeather!.date,
+              temp: weatherProvider.currentWeather!.temp,
+              wind: weatherProvider.currentWeather!.wind,
+              humidity: weatherProvider.currentWeather!.humidity,
+              condition: weatherProvider.currentWeather!.condition,
+              icon: weatherProvider.currentWeather!.icon,
+            )
+            : null;
 
     Widget buildRightPanel() {
       if (weatherProvider.isLoading) {
@@ -99,36 +103,42 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          ForecastList(
-            forecast: weatherProvider.visibleForecast
-                .map((f) => {
-                      "date": f.date,
-                      "temp": f.temp,
-                      "wind": f.wind,
-                      "humidity": f.humidity,
-                      "icon": f.icon,
-                    })
-                .toList(),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children:
+                weatherProvider.visibleForecast.map((f) {
+                  return ForecastCard(
+                    date: f.date,
+                    temp: f.temp,
+                    wind: f.wind,
+                    humidity: f.humidity,
+                    icon: f.icon,
+                  );
+                }).toList(),
           ),
+
           const SizedBox(height: 12),
           if (weatherProvider.hasMore)
             Align(
               alignment: Alignment.centerLeft,
               child: ElevatedButton(
-                onPressed: weatherProvider.isLoadingMore
-                    ? null
-                    : () async {
-                        await context
-                            .read<WeatherProvider>()
-                            .loadMoreForecast(step: 4);
-                      },
-                child: weatherProvider.isLoadingMore
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text("Load more"),
+                onPressed:
+                    weatherProvider.isLoadingMore
+                        ? null
+                        : () async {
+                          await context
+                              .read<WeatherProvider>()
+                              .loadMoreForecast(step: 4);
+                        },
+                child:
+                    weatherProvider.isLoadingMore
+                        ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : const Text("Load more"),
               ),
             ),
         ],
@@ -158,17 +168,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: keys.map((k) {
-                    final label = k.startsWith('city:')
-                        ? k.substring(5)
-                        : 'My Location';
-                    return ActionChip(
-                      label: Text(label),
-                      onPressed: () async {
-                        await context.read<WeatherProvider>().loadFromCacheByKey(k);
-                      },
-                    );
-                  }).toList(),
+                  children:
+                      keys.map((k) {
+                        final label =
+                            k.startsWith('city:')
+                                ? k.substring(5)
+                                : 'My Location';
+                        return ActionChip(
+                          label: Text(label),
+                          onPressed: () async {
+                            await context
+                                .read<WeatherProvider>()
+                                .loadFromCacheByKey(k);
+                          },
+                        );
+                      }).toList(),
                 ),
               );
             },

@@ -42,7 +42,7 @@ class WeatherProvider with ChangeNotifier {
       final weatherJson = await _weatherService.getWeatherByCity(city);
       
       final forecastJson =
-          await _weatherService.getForecast(city, _visibleForecastCount + 1);
+          await _weatherService.getForecast(city, 14);
 
       _setCurrentWeather(weatherJson);
       _setAllForecastFromForecastJson(forecastJson);
@@ -76,7 +76,7 @@ class WeatherProvider with ChangeNotifier {
       final forecastJson = await _weatherService.getForecastByCoords(
         lat,
         lon,
-        _visibleForecastCount + 1,
+        14,
       );
 
       _setCurrentWeather(weatherJson);

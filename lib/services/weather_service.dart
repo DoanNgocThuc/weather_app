@@ -19,7 +19,7 @@ class WeatherService {
   }
 
   Future<Map<String, dynamic>> getForecast(String city, int days) async {
-    final url = Uri.parse('$_baseUrl/forecast.json?key=$_apiKey&q=$city&days=14&aqi=no&alerts=no&hour=no&lang=no&tp=no');
+    final url = Uri.parse('$_baseUrl/forecast.json?key=$_apiKey&q=$city&days=$days&aqi=no&alerts=no&hour=no&lang=no&tp=no');
     final response = await http.get(url);
     if (response.statusCode == 200) {
       print("Success");
