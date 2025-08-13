@@ -15,6 +15,7 @@ class WeatherService {
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
+      print(jsonDecode(response.body));
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception('Failed to load weather data: ${response.body}');
