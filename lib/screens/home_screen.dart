@@ -1,4 +1,3 @@
-// screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
@@ -21,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Load New York on startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WeatherProvider>().fetchWeatherAndForecast("New York");
     });
@@ -29,26 +27,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _handleSearch() async {
     final q = searchController.text.trim();
-    if (q.isEmpty) {
-      context.read<WeatherProvider>().fetchWeatherAndForecast("New York"); // or ignore
-      return;
-    }
+    if (q.isEmpty) return;
     await context.read<WeatherProvider>().fetchWeatherAndForecast(q);
   }
 
   Future<void> _handleUseLocation() async {
     try {
-      final svcEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!svcEnabled) {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
         throw Exception('Location services are disabled');
       }
 
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.denied ||
-          perm == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         throw Exception('Location permission denied');
       }
 
@@ -59,11 +54,9 @@ class _HomeScreenState extends State<HomeScreen> {
           .read<WeatherProvider>()
           .fetchWeatherAndForecastByCoords(pos.latitude, pos.longitude);
     } catch (e) {
-      // Let provider show a friendly message
-      context.read<WeatherProvider>().fetchWeatherAndForecast("New York");
       final prov = context.read<WeatherProvider>();
       prov
-        // .._errorMessage = 'Could not use your location. You can search by city instead.'
+        // .._fail(e) // show friendly line
         ..notifyListeners();
     }
   }
@@ -73,7 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final bgLight = const Color(0xFFDCE9F4);
     final weatherProvider = context.watch<WeatherProvider>();
 
-    final hasData = weatherProvider.currentWeather != null && weatherProvider.forecast.isNotEmpty;
+    final hasData = weatherProvider.currentWeather != null &&
+        weatherProvider.visibleForecast.isNotEmpty;
 
     final currentCard = hasData
         ? CurrentWeatherCard(
@@ -86,6 +80,102 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: weatherProvider.currentWeather!.icon,
           )
         : null;
+
+    Widget buildRightPanel() {
+      if (weatherProvider.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (!hasData) {
+        return const Center(child: Text("No weather data"));
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          currentCard!,
+          const SizedBox(height: 20),
+          const Text(
+            "Forecast",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          ForecastList(
+            forecast: weatherProvider.visibleForecast
+                .map((f) => {
+                      "date": f.date,
+                      "temp": f.temp,
+                      "wind": f.wind,
+                      "humidity": f.humidity,
+                      "icon": f.icon,
+                    })
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+          if (weatherProvider.hasMore)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton(
+                onPressed: weatherProvider.isLoadingMore
+                    ? null
+                    : () async {
+                        await context
+                            .read<WeatherProvider>()
+                            .loadMoreForecast(step: 4);
+                      },
+                child: weatherProvider.isLoadingMore
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text("Load more"),
+              ),
+            ),
+        ],
+      );
+    }
+
+    final searchPanel = SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          SearchBox(
+            controller: searchController,
+            onSearch: _handleSearch,
+            onUseLocation: _handleUseLocation,
+            errorText: weatherProvider.errorMessage,
+            isLoading: weatherProvider.isLoading,
+          ),
+          const SizedBox(height: 8),
+          // (Next section) — Today history chips
+          FutureBuilder<List<String>>(
+            future: context.read<WeatherProvider>().getTodayHistoryKeys(),
+            builder: (context, snap) {
+              final keys = snap.data ?? [];
+              if (keys.isEmpty) return const SizedBox.shrink();
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: keys.map((k) {
+                    final label = k.startsWith('city:')
+                        ? k.substring(5)
+                        : 'My Location';
+                    return ActionChip(
+                      label: Text(label),
+                      onPressed: () async {
+                        await context.read<WeatherProvider>().loadFromCacheByKey(k);
+                      },
+                    );
+                  }).toList(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
 
     return Scaffold(
       backgroundColor: bgLight,
@@ -109,69 +199,35 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Main content
+            // Content
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final isWide = constraints.maxWidth > 800;
-
-                  final searchPanel = SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: SearchBox(
-                      controller: searchController,
-                      onSearch: _handleSearch,
-                      onUseLocation: _handleUseLocation,
-                      errorText: weatherProvider.errorMessage, // 👈 show errors here
-                      isLoading: weatherProvider.isLoading,
-                    ),
-                  );
-
-                  final rightPanel = SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: weatherProvider.isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : !hasData
-                            ? const Center(child: Text("No weather data"))
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  currentCard!,
-                                  const SizedBox(height: 20),
-                                  const Text(
-                                    "4-Day Forecast",
-                                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ForecastList(
-                                    forecast: weatherProvider.forecast
-                                        .map((f) => {
-                                              "date": f.date,
-                                              "temp": f.temp,
-                                              "wind": f.wind,
-                                              "humidity": f.humidity,
-                                              "icon": f.icon,
-                                            })
-                                        .toList(),
-                                  ),
-                                ],
-                              ),
-                  );
 
                   if (isWide) {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(flex: 3, child: searchPanel),
-                        Expanded(flex: 7, child: rightPanel),
+                        Expanded(
+                          flex: 7,
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: buildRightPanel(),
+                          ),
+                        ),
                       ],
                     );
                   } else {
                     return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           searchPanel,
-                          rightPanel,
+                          const SizedBox(height: 16),
+                          buildRightPanel(),
                         ],
                       ),
                     );

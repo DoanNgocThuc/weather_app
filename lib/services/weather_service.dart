@@ -11,16 +11,19 @@ class WeatherService {
     final url = Uri.parse('$_baseUrl/current.json?key=$_apiKey&q=$city&aqi=no');
     final response = await http.get(url);
     if (response.statusCode == 200) {
+
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception(_extractMessage(response.body, 'Failed to load weather data'));
     }
   }
 
-  Future<Map<String, dynamic>> getForecast(String city, {int days = 3}) async {
-    final url = Uri.parse('$_baseUrl/forecast.json?key=$_apiKey&q=$city&days=$days&aqi=no&alerts=no');
+  Future<Map<String, dynamic>> getForecast(String city, int days) async {
+    final url = Uri.parse('$_baseUrl/forecast.json?key=$_apiKey&q=$city&days=14&aqi=no&alerts=no&hour=no&lang=no&tp=no');
     final response = await http.get(url);
     if (response.statusCode == 200) {
+      print("Success");
+      // print('DEBUG: Forecast response: ${response.body}');
       return jsonDecode(response.body) as Map<String, dynamic>;
     } else {
       throw Exception(_extractMessage(response.body, 'Failed to load forecast data'));
@@ -38,7 +41,7 @@ class WeatherService {
     }
   }
 
-  Future<Map<String, dynamic>> getForecastByCoords(double lat, double lon, {int days = 3}) async {
+  Future<Map<String, dynamic>> getForecastByCoords(double lat, double lon, int days) async {
     final url = Uri.parse('$_baseUrl/forecast.json?key=$_apiKey&q=$lat,$lon&days=$days&aqi=no&alerts=no');
     final response = await http.get(url);
     if (response.statusCode == 200) {
