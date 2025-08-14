@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
             wind: weatherProvider.currentWeather!.wind,
             humidity: weatherProvider.currentWeather!.humidity,
             condition: weatherProvider.currentWeather!.condition,
-            icon: weatherProvider.currentWeather!.icon,
+            iconUrl: weatherProvider.currentWeather!.iconUrl,
           )
         : null;
 
@@ -170,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 temp: f.temp,
                 wind: f.wind,
                 humidity: f.humidity,
-                icon: f.icon,
+                iconUrl: f.iconUrl,
               );
             }).toList(),
           ),

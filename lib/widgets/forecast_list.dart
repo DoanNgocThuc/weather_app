@@ -17,7 +17,7 @@ class ForecastList extends StatelessWidget {
             temp: day["temp"],
             wind: day["wind"],
             humidity: day["humidity"],
-            icon: day["icon"],
+            iconUrl: day["icon"],
           );
         }).toList(),
       ),

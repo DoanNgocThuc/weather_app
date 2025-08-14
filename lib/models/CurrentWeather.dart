@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class CurrentWeather {
-  final String city;
+  final String city; // empty for forecast items
   final String date;
   final String temp;
   final String wind;
   final String humidity;
   final String condition;
-  final IconData icon; // we still store an Icon for simplicity
+   final String iconUrl; // instead of IconData
 
   CurrentWeather({
     required this.city,
@@ -16,20 +16,23 @@ class CurrentWeather {
     required this.wind,
     required this.humidity,
     required this.condition,
-    required this.icon,
+    required this.iconUrl,
   });
 
-  factory CurrentWeather.fromApi(Map<String, dynamic> json) {
+  /// Shared method for icon mapping
+  // static IconData _mapConditionToIcon(String text) {
+  //   final condition = text.toLowerCase();
+  //   if (condition.contains('sunny')) return Icons.wb_sunny;
+  //   if (condition.contains('rain')) return Icons.grain;
+  //   if (condition.contains('storm')) return Icons.thunderstorm;
+  //   if (condition.contains('snow')) return Icons.ac_unit;
+  //   return Icons.cloud;
+  // }
+
+  /// Parse from "current weather" API JSON
+  factory CurrentWeather.fromApiCurrent(Map<String, dynamic> json) {
     final current = json['current'];
     final location = json['location'];
-
-    // Map condition text to icon
-    IconData iconData = Icons.cloud;
-    final conditionText = (current['condition']['text'] ?? "").toLowerCase();
-    if (conditionText.contains('sunny')) iconData = Icons.wb_sunny;
-    else if (conditionText.contains('rain')) iconData = Icons.grain;
-    else if (conditionText.contains('storm')) iconData = Icons.thunderstorm;
-    else if (conditionText.contains('snow')) iconData = Icons.ac_unit;
 
     return CurrentWeather(
       city: location['name'] ?? '',
@@ -38,7 +41,22 @@ class CurrentWeather {
       wind: "${current['wind_kph']} km/h",
       humidity: "${current['humidity']}%",
       condition: current['condition']['text'] ?? '',
-      icon: iconData,
+      iconUrl: "https:${current['condition']['icon']}",
+    );
+  }
+
+  /// Parse from a forecast-day JSON item
+  factory CurrentWeather.fromApiForecast(Map<String, dynamic> json) {
+    final day = json['day'];
+
+    return CurrentWeather(
+      city: '', // forecast entries don't have city
+      date: json['date'] ?? '',
+      temp: "${day['avgtemp_c']}°C",
+      wind: "${day['maxwind_kph']} km/h",
+      humidity: "${day['avghumidity']}%",
+      condition: day['condition']['text'] ?? '',
+      iconUrl: "https:${day['condition']['icon']}",
     );
   }
 }

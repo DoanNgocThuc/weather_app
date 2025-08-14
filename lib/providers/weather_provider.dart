@@ -12,7 +12,7 @@ class WeatherProvider with ChangeNotifier {
   bool _isLoadingMore = false;
 
   CurrentWeather? _currentWeather;
-  List<ForecastDay> _allForecast = []; // all upcoming days (tomorrow onward)
+  List<CurrentWeather> _allForecast = [];
   int _visibleForecastCount = 4;
 
   String? _errorMessage;
@@ -22,7 +22,7 @@ class WeatherProvider with ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
 
   CurrentWeather? get currentWeather => _currentWeather;
-  List<ForecastDay> get visibleForecast =>
+  List<CurrentWeather> get visibleForecast =>
       _allForecast.take(_visibleForecastCount).toList();
 
   bool get hasMore => _visibleForecastCount < _allForecast.length;
@@ -117,20 +117,21 @@ class WeatherProvider with ChangeNotifier {
   // Helpers
   // =========================
   void _setCurrentWeather(Map<String, dynamic> weatherJson) {
-    _currentWeather = CurrentWeather.fromApi(weatherJson);
+    _currentWeather = CurrentWeather.fromApiCurrent(weatherJson);
   }
 
   void _setAllForecastFromForecastJson(Map<String, dynamic> forecastJson) {
   final list = (forecastJson['forecast']['forecastday'] as List);
 
-  // Store ALL days except today
+  // Skip today, use CurrentWeather.fromApiForecast for the rest
   _allForecast = list
       .skip(1)
-      .map((d) => ForecastDay.fromApi(d as Map<String, dynamic>))
+      .map((d) => CurrentWeather.fromApiForecast(d as Map<String, dynamic>))
       .toList();
 
   _visibleForecastCount = 4;
 }
+
 
 
   void _fail(Object e) {

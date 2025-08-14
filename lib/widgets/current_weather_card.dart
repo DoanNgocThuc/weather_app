@@ -7,7 +7,7 @@ class CurrentWeatherCard extends StatelessWidget {
   final String wind;
   final String humidity;
   final String condition;
-  final IconData icon;
+  final String iconUrl;
 
   const CurrentWeatherCard({
     super.key,
@@ -17,7 +17,7 @@ class CurrentWeatherCard extends StatelessWidget {
     required this.wind,
     required this.humidity,
     required this.condition,
-    required this.icon,
+    required this.iconUrl,
   });
 
   @override
@@ -53,7 +53,7 @@ class CurrentWeatherCard extends StatelessWidget {
           ),
           Column(
             children: [
-              Icon(icon, size: 50, color: Colors.white),
+              Image.network(iconUrl, width: 50, height: 50),
               const SizedBox(height: 4),
               Text(condition, style: const TextStyle(color: Colors.white)),
             ],
