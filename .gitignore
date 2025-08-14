@@ -46,3 +46,6 @@ app.*.map.json
 
 #env
 .env
+
+#node-modules
+**/node_modules/
