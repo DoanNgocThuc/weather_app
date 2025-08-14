@@ -32,3 +32,5 @@ In the root directory of the project, create a file named .env and add the requi
 ```bash
 flutter run
 ```
+### 🛠 Bug on the Subscribe functionality
+For the time being, I can't do subscribe function due to Firebase's App Functions require a credit card.
