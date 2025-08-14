@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/weather_service.dart';
 import '../models/CurrentWeather.dart';
-import '../models/ForecastDay.dart';
 
 class WeatherProvider with ChangeNotifier {
   final WeatherService _weatherService = WeatherService();

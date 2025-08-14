@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:weather_app/widgets/forecast_card.dart';
 import '../widgets/search_box.dart';
 import '../widgets/current_weather_card.dart';
 import '../providers/weather_provider.dart';
+import 'subscribe_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,8 +17,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController searchController = TextEditingController();
-  bool isSubscribed = false;
-  String? subscribedEmail;
 
   @override
   void initState() {
@@ -58,71 +58,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Email subscription dialog
-  void _showSubscribeDialog() {
-    final emailController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Subscribe to Daily Forecast"),
-        content: TextField(
-          controller: emailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            labelText: "Enter your email",
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final email = emailController.text.trim();
-              if (_isValidEmail(email)) {
-                _subscribe(email);
-                Navigator.pop(ctx);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Please enter a valid email")),
-                );
-              }
-            },
-            child: const Text("Subscribe"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _isValidEmail(String email) =>
-      email.isNotEmpty && email.contains('@');
-
-  void _subscribe(String email) {
-    setState(() {
-      isSubscribed = true;
-      subscribedEmail = email;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Subscribed with $email")),
-    );
-    print("Subscribed: $email");
-  }
-
-  void _unsubscribe() {
-    setState(() {
-      isSubscribed = false;
-      subscribedEmail = null;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Unsubscribed successfully")),
-    );
-    print("Unsubscribed");
-  }
-
   @override
   Widget build(BuildContext context) {
     final bgLight = const Color(0xFFDCE9F4);
@@ -156,9 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           currentCard!,
           const SizedBox(height: 20),
-          const Text(
+          Text(
             "Forecast",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: GoogleFonts.rubik(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -186,13 +121,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             .read<WeatherProvider>()
                             .loadMoreForecast(step: 4);
                       },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF5A7BD0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 child: weatherProvider.isLoadingMore
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Text("Load more"),
+                    : Text(
+                        "Load more",
+                        style: GoogleFonts.rubik(color: Colors.white),
+                      ),
               ),
             ),
         ],
@@ -222,15 +166,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: keys.map((k) {
-                    final label = k.startsWith('city:')
-                        ? k.substring(5)
-                        : 'My Location';
+                    final label = k.startsWith('city:') ? k.substring(5) : 'My Location';
                     return ActionChip(
-                      label: Text(label),
+                      label: Text(label, style: GoogleFonts.rubik()),
+                      backgroundColor: const Color(0xFF5A7BD0),
+                      labelStyle: GoogleFonts.rubik(color: Colors.white),
                       onPressed: () async {
-                        await context
-                            .read<WeatherProvider>()
-                            .loadFromCacheByKey(k);
+                        await context.read<WeatherProvider>().loadFromCacheByKey(k);
                       },
                     );
                   }).toList(),
@@ -251,15 +193,14 @@ class _HomeScreenState extends State<HomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               color: const Color(0xFF5A7BD0),
-              child: const Center(
-                child: Text(
-                  "Weather Dashboard",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+              child: Text(
+                "Weather Dashboard",
+                style: GoogleFonts.rubik(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
+                textAlign: TextAlign.center,
               ),
             ),
             Expanded(
@@ -301,15 +242,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          if (isSubscribed) {
-            _unsubscribe();
-          } else {
-            _showSubscribeDialog();
-          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SubscribeScreen()),
+          );
         },
-        label: Text(isSubscribed ? "Unsubscribe" : "Subscribe"),
-        icon: Icon(isSubscribed ? Icons.cancel : Icons.email),
-        backgroundColor: isSubscribed ? Colors.red : Colors.blue,
+        label: Text("Subscribe", style: GoogleFonts.rubik(color: Colors.white)),
+        icon: const Icon(Icons.email, color: Colors.white),
+        backgroundColor: const Color(0xFF5A7BD0),
       ),
     );
   }
